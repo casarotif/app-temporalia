@@ -1,4 +1,4 @@
-# API Tempo
+# API Temporalia
 
 Aplicação em Python para **previsão do tempo** a partir do **nome de uma cidade**. O projeto consulta a [Open-Meteo](https://open-meteo.com/) (geocodificação + previsão) e devolve temperatura à superfície, humidade relativa, velocidade e direção do vento, entre outros campos atuais, com **tratamento de erros** para entradas inválidas, cidades inexistentes e falhas de rede. Os dados são da Open-Meteo; ver termos de uso no site oficial.
 
