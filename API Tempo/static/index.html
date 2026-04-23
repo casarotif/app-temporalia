@@ -1,0 +1,145 @@
+<!doctype html>
+<html lang="pt-br">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>Previsão do Tempo</title>
+    <link rel="stylesheet" href="/static/styles.css" />
+  </head>
+
+  <body>
+    <header class="topbar">
+      <div class="container topbar__inner">
+        <div class="brand">
+          <div class="brand__dot" aria-hidden="true"></div>
+          <div>
+            <div class="brand__title">Temporalia</div>
+            <div class="brand__subtitle">Clima atual em tempo real</div>
+          </div>
+        </div>
+      </div>
+    </header>
+
+    <main class="container">
+      <section class="card">
+        <div class="card__header">
+          <h1 class="h1">Clima agora</h1>
+          <p class="muted">Digite a cidade e veja os dados atuais.</p>
+        </div>
+
+        <form class="form" id="form">
+          <label class="field">
+            <span class="label">Cidade</span>
+            <input
+              class="input"
+              name="cidade"
+              placeholder="Ex.: São Paulo"
+              autocomplete="off"
+              required
+            />
+          </label>
+
+          <label class="field">
+            <span class="label">País (opcional)</span>
+            <input class="input" name="country_code" placeholder="Ex.: BR" maxlength="2" />
+          </label>
+
+          <button class="btn" type="submit">Buscar</button>
+        </form>
+
+        <div class="divider"></div>
+
+        <section class="grid" id="result" hidden>
+          <article class="metric">
+            <div class="metric__label">Local</div>
+            <div class="metric__value" id="local">—</div>
+            <div class="metric__hint muted" id="coords">—</div>
+          </article>
+
+          <article class="metric metric--hero">
+            <div class="metric__label">Temperatura</div>
+            <div class="metric__value metric__value--big" id="temp">—</div>
+            <div class="metric__hint muted" id="tempHint">—</div>
+          </article>
+
+          <article class="metric">
+            <div class="metric__label">Umidade</div>
+            <div class="metric__value" id="hum">—</div>
+            <div class="metric__hint muted">Relativa</div>
+          </article>
+
+          <article class="metric">
+            <div class="metric__label">Vento</div>
+            <div class="metric__value" id="wind">—</div>
+            <div class="metric__hint muted" id="windHint">—</div>
+          </article>
+
+          <article class="metric">
+            <div class="metric__label">Precipitação</div>
+            <div class="metric__value" id="prec">—</div>
+            <div class="metric__hint muted">Atual</div>
+          </article>
+
+          <article class="metric">
+            <div class="metric__label">Atualizado</div>
+            <div class="metric__value" id="time">—</div>
+            <div class="metric__hint muted">Horário do dado</div>
+          </article>
+        </section>
+
+        <p class="error" id="error" hidden></p>
+      </section>
+    </main>
+
+    <script>
+      const $ = (id) => document.getElementById(id);
+
+      $("form").addEventListener("submit", async (e) => {
+        e.preventDefault();
+        $("error").hidden = true;
+
+        const fd = new FormData(e.target);
+        const cidade = fd.get("cidade").toString().trim();
+        const country_code = fd.get("country_code").toString().trim();
+
+        const qs = new URLSearchParams({ cidade });
+        if (country_code) qs.set("country_code", country_code);
+
+        try {
+          const r = await fetch(`/api/clima?${qs.toString()}`);
+          const data = await r.json();
+          if (!r.ok) throw new Error(data?.detail || "Erro ao buscar dados.");
+
+          $("result").hidden = false;
+
+          $("local").textContent = `${data.local.nome ?? "—"} • ${data.local.regiao ?? ""} ${
+            data.local.pais ?? ""
+          }`
+            .replace(/\s+/g, " ")
+            .trim();
+          $("coords").textContent = `${Number(data.local.latitude).toFixed(3)}, ${Number(
+            data.local.longitude
+          ).toFixed(3)}`;
+
+          const tUnit = data.unidades?.temperature_2m ?? "°C";
+          $("temp").textContent = `${data.atual.temperature_2m ?? "—"} ${tUnit}`;
+          $("tempHint").textContent = `Sensação: ${data.atual.apparent_temperature ?? "—"} ${tUnit}`;
+
+          const hUnit = data.unidades?.relative_humidity_2m ?? "%";
+          $("hum").textContent = `${data.atual.relative_humidity_2m ?? "—"} ${hUnit}`;
+
+          const wUnit = data.unidades?.wind_speed_10m ?? "km/h";
+          $("wind").textContent = `${data.atual.wind_speed_10m ?? "—"} ${wUnit}`;
+          $("windHint").textContent = `Direção: ${data.atual.wind_direction_10m ?? "—"}°`;
+
+          $("prec").textContent = `${data.atual.precipitation ?? "—"}`;
+          $("time").textContent = `${data.atual.time ?? "—"}`;
+        } catch (err) {
+          $("result").hidden = true;
+          $("error").hidden = false;
+          $("error").textContent = err?.message || String(err);
+        }
+      });
+    </script>
+  </body>
+</html>
