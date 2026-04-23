@@ -209,10 +209,10 @@ class TestClimaAtualPorCidade(unittest.TestCase):
     def test_previsao_sem_current_nem_unidades(self, mock_get_json: MagicMock) -> None:
         mock_get_json.side_effect = [_geo_result(), {}]
 
-        out = clima_atual_por_cidade("London")
+        with self.assertRaises(RuntimeError) as ctx:
+            clima_atual_por_cidade("London")
 
-        self.assertIsNone(out["atual"])
-        self.assertIsNone(out["unidades"])
+        self.assertIn("current", str(ctx.exception))
 
     @patch("apiclima.clima._get_json")
     def test_country_code_so_espacos_nao_enviado(self, mock_get_json: MagicMock) -> None:
